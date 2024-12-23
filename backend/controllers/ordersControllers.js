@@ -172,7 +172,7 @@ exports.submitOrder = async (req, res) => {
         }
 
 
-        // update status in cart
+        // update the status in cart
         const updatedCartStatus = await OrderArticles.updateMany(
             {
                 userID: orderDetails.userID,

@@ -4,6 +4,8 @@ const { DeliveryTypes, OrderDeliveryDetails } = require('../models/deliveryModel
 const { getSignedUrl } = require('../utils/pinata');
 const { getSpiralBindingPrice } = require('../utils/pricing');
 const { createOrder } = require('../services/CashFreePayments');
+const { Client } = require('twilio/lib/base/BaseTwilio');
+const redis = require('../config/redisClient');
 
 // Helper function for spiral binding data structure
 const spiralBindingData = async (req) => {
@@ -186,26 +188,26 @@ exports.submitOrder = async (req, res) => {
         }
 
         // payment
-        const paymentResp = await createOrder();
-        console.log(paymentResp);
+        // const paymentResp = await createOrder();
+        // console.log(paymentResp);
 
 
         res.status(200).json({
             status: 'success',
             data: {
-                paymentResp: paymentResp,
-                // orderID: submittedOrder.orderID,
-                // articleIDs: submittedOrder.articleIDs,
-                // noOfServices: submittedOrder.noOfServices,
-                // callBeforePrint: submittedOrder.callBeforePrint,
-                // orderAmount: submittedOrder.orderAmount,
-                // paymentStatus: submittedOrder.paymentStatus,
-                // orderStatus: submittedOrder.orderStatus,
-                // orderDeliveryDetails: {
-                //     orderDeliveryDate: orderDelDtls.orderDeliveryDate,
-                //     pickupAddressID: orderDelDtls.pickupAddressIDFromUsersAddress,
-                //     deliveryStatus: orderDelDtls.deliveryStatus
-                // }
+                // paymentResp: paymentResp,
+                orderID: submittedOrder.orderID,
+                articleIDs: submittedOrder.articleIDs,
+                noOfServices: submittedOrder.noOfServices,
+                callBeforePrint: submittedOrder.callBeforePrint,
+                orderAmount: submittedOrder.orderAmount,
+                paymentStatus: submittedOrder.paymentStatus,
+                orderStatus: submittedOrder.orderStatus,
+                orderDeliveryDetails: {
+                    orderDeliveryDate: orderDelDtls.orderDeliveryDate,
+                    pickupAddressID: orderDelDtls.pickupAddressIDFromUsersAddress,
+                    deliveryStatus: orderDelDtls.deliveryStatus
+                }
             }
         });
     } catch (err) {
@@ -217,10 +219,20 @@ exports.submitOrder = async (req, res) => {
     }
 };
 
+const redisCheckInAndGetOrders = async (userID) => {
+    try {
+        const data = await redis.get(`orders:${userID}`);
+        return data ? JSON.parse(data) : null;
+    } catch (err) {
+        console.error(`Redis error: ${err.message}`);
+        return null; // Fallback to null if Redis fails
+    }
+}
 
 exports.getOrders = async (req, res) => {
     try {
         const queryS = {};
+        const retUserID = req.userID;
         
         // use with auth logic
         //  if(req.query.userID){
@@ -228,7 +240,17 @@ exports.getOrders = async (req, res) => {
         // }else{
         //     return res.status(400).json({ error: 'User ID Not Found' });
         // }
-        queryS.userID = req.userID;
+
+        // caching
+        const checkInAndGetOrdersData = await redisCheckInAndGetOrders(retUserID);
+        if(checkInAndGetOrdersData){
+            return res.status(200).json({
+                status: 'success',
+                data: checkInAndGetOrdersData
+            });
+        }
+
+        queryS.userID = retUserID;
         // queryS.userID = '7993924730';
         const allOrders = await Orders.aggregate([
             // Initial match to filter orders early
@@ -304,6 +326,14 @@ exports.getOrders = async (req, res) => {
                 $sort: { createdAt: -1 }
             }
         ]);
+
+        // cache new data
+        try {
+            await redis.set(`orders:${retUserID}`, JSON.stringify(allOrders), { EX: 3600 }); // 1hr TTL
+        } catch (err) {
+            console.error(`Failed to cache data for user ${retUserID}: ${err.message}`);
+        }
+
 
         res.status(200).json({
             status: 'success',

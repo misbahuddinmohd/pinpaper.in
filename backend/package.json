@@ -22,6 +22,7 @@
         "nodemon": "^3.1.9",
         "pinata": "^1.7.2",
         "react-redux": "^9.1.2",
+        "redis": "^4.7.0",
         "redux": "^5.0.1",
         "twilio": "^5.3.6",
         "unirest": "^0.6.0"

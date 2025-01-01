@@ -557,8 +557,8 @@ const DeliveryPage = () => {
         hideLoading();
         
         // next navigation
-        navigate('/makePayment', { state: {orderData}});
-        // navigate('/orderSuccess', { state: {orderData} });
+        // navigate('/makePayment', { state: {orderData}});
+        navigate('/orderSuccess', { state: {orderData} });
         // navigate('/order-success', { state: { orderId: data.orderId } });
       } else {
         console.error("Order Submission Failed:", response.statusText);

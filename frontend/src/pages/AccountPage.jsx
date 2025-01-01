@@ -28,11 +28,11 @@ const AccountPage = () => {
 
       <h2 className="text-xl font-semibold mb-4">My Account</h2>
       <div className="space-y-4">
-        <div className="p-4 bg-blue-50 border rounded-lg shadow-md" onClick={() => { navigate('/account/getUser') }}>
+        <div className="p-4 bg-blue-50 border rounded-lg hover:bg-blue-100 text-blue-700 hover:text-blue-700 transition-all duration-200 shadow-md" onClick={() => { navigate('/account/getUser') }}>
           <h3 className="font-medium mb-1">Profile Information</h3>
           <p className="text-sm text-gray-600">Manage your account details</p>
         </div>
-        <div className="p-4 bg-blue-50 border rounded-lg shadow-md" onClick={() => { navigate('/account/getAddress') }}>
+        <div className="p-4 bg-blue-50 border rounded-lg hover:bg-blue-100 text-blue-700 hover:text-blue-700 transition-all duration-200 shadow-md" onClick={() => { navigate('/account/getAddress') }}>
           <h3 className="font-medium mb-1">Address Book</h3>
           <p className="text-sm text-gray-600">Manage your delivery addresses</p>
         </div>
